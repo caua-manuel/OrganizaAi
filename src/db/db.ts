@@ -30,6 +30,31 @@ import type {
 } from "./types";
 import { popular } from "./seed";
 
+/* Versão 1 do schema. Nunca mude uma versão publicada: mudanças
+   entram como uma versão nova abaixo. Exportada para o teste de
+   migração abrir um banco "antigo" de verdade. */
+export const ESQUEMA_V1 = {
+  tasks: "id, plannedFor, pillar, projectId, dueDate, doneAt, kind, createdAt",
+  ideas: "id, status, createdAt",
+  goals: "id, pillar",
+  habits: "id, pillar, link",
+  habitLogs: "id, habitId, date",
+  transactions: "id, date, categoryId, source, importHash",
+  categories: "id, type, name",
+  categoryRules: "id, categoryId",
+  savingsGoals: "id",
+  savingsDeposits: "id, goalId, date",
+  importMappings: "id, bankName",
+  subjects: "id, status",
+  assessments: "id, subjectId, date",
+  courses: "id",
+  projects: "id, status",
+  focusSessions: "id, pillar, projectId, date",
+  workouts: "id, date, type",
+  weeklyReviews: "id, weekStart",
+  settings: "id",
+};
+
 export class OrganizaDB extends Dexie {
   tasks!: EntityTable<Task, "id">;
   ideas!: EntityTable<Idea, "id">;
@@ -53,27 +78,18 @@ export class OrganizaDB extends Dexie {
 
   constructor(nome = "organizaai") {
     super(nome);
-    this.version(1).stores({
-      tasks: "id, plannedFor, pillar, projectId, dueDate, doneAt, kind, createdAt",
-      ideas: "id, status, createdAt",
-      goals: "id, pillar",
-      habits: "id, pillar, link",
-      habitLogs: "id, habitId, date",
-      transactions: "id, date, categoryId, source, importHash",
-      categories: "id, type, name",
-      categoryRules: "id, categoryId",
-      savingsGoals: "id",
-      savingsDeposits: "id, goalId, date",
-      importMappings: "id, bankName",
-      subjects: "id, status",
-      assessments: "id, subjectId, date",
-      courses: "id",
-      projects: "id, status",
-      focusSessions: "id, pillar, projectId, date",
-      workouts: "id, date, type",
-      weeklyReviews: "id, weekStart",
-      settings: "id",
-    });
+    this.version(1).stores(ESQUEMA_V1);
+    /* v2 (Fase 6): regras ganham `priority`. Os índices não mudam; a
+       migração só preenche o campo nas regras antigas, pela ordem em
+       que foram criadas (que era a regra de desempate até aqui).
+       Tarefas ganham `repeat` e `notes`, que não precisam de índice. */
+    this.version(2)
+      .stores({})
+      .upgrade(async (tx) => {
+        const regras = await tx.table("categoryRules").toArray();
+        regras.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+        for (let i = 0; i < regras.length; i++) await tx.table("categoryRules").update(regras[i].id, { priority: i + 1 });
+      });
     /* roda uma única vez, quando o banco é criado do zero */
     this.on("populate", (tx) => popular(tx));
   }

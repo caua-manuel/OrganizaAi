@@ -2,7 +2,7 @@
    os dados e devolvem números, sem tocar no banco. Por isso dá para
    testar cada regra isoladamente (financas.test.ts). */
 import type { Category, CategoryRule, Cents, ID, ISODate, SavingsDeposit, SavingsGoal, Settings, Transaction } from "../db/types";
-import { dentro, limitesDoMes, mesAnterior, mesDe, somarMeses } from "./datas";
+import { dentro, limitesDoMes, mesAnterior, mesDe, mesesEntre, somarMeses } from "./datas";
 import type { Semana } from "./datas";
 import { somar } from "./dinheiro";
 
@@ -81,6 +81,22 @@ export function projecaoMeta(goalId: ID, alvo: Cents, deps: SavingsDeposit[], ho
   return { tipo: "estimada", mediaMensal: media, meses, data: somarMeses(hoje, meses) };
 }
 
+/* ── Quanto guardar por mês para chegar na data desejada ────
+   Divide o que falta pelos meses até a data, contando o mês atual
+   (meta para daqui a 10 meses → 10 parcelas). Data no mês atual → 1. */
+export type AporteNecessario =
+  | { tipo: "atingida" }
+  | { tipo: "prazo-passou"; falta: Cents }
+  | { tipo: "mensal"; porMes: Cents; meses: number };
+
+export function aporteNecessario(alvo: Cents, saldo: Cents, prazo: ISODate, hoje: ISODate): AporteNecessario {
+  const falta = alvo - saldo;
+  if (falta <= 0) return { tipo: "atingida" };
+  if (prazo < hoje) return { tipo: "prazo-passou", falta };
+  const meses = Math.max(1, mesesEntre(hoje, prazo));
+  return { tipo: "mensal", porMes: Math.ceil(falta / meses), meses };
+}
+
 /* ── Gasto de uma categoria numa semana (ex.: Comer fora) ─── */
 export const gastoNaSemana = (categoryId: ID, semana: Semana, txs: Transaction[]) =>
   -somar(txs.filter((t) => t.categoryId === categoryId && t.amount < 0 && dentro(t.date, semana)).map((t) => t.amount));
@@ -126,13 +142,16 @@ function cyrb53(texto: string, seed = 0) {
 export const importHash = (date: ISODate, amount: Cents, description: string) =>
   cyrb53(`${date}|${amount}|${normalizarDescricao(description)}`);
 
-/* Primeira regra (pela ordem de criação) cujo texto aparece na
-   descrição, sem diferenciar maiúsculas. Sem regra → null, e quem
-   chama usa "Sem categoria". Devolve também a regra, para a tela
-   mostrar POR QUE aquela categoria foi escolhida. */
+/* Primeira regra (menor prioridade; empate = a criada antes) cujo
+   texto aparece na descrição, sem diferenciar maiúsculas. Sem regra →
+   null, e quem chama usa "Sem categoria". Devolve também a regra,
+   para a tela mostrar POR QUE aquela categoria foi escolhida. */
+export const ordenarRegras = (regras: CategoryRule[]) =>
+  [...regras].sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0) || a.createdAt.localeCompare(b.createdAt));
+
 export function categorizar(descricao: string, regras: CategoryRule[]): CategoryRule | null {
   const d = normalizarDescricao(descricao);
-  const ordenadas = [...regras].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const ordenadas = ordenarRegras(regras);
   return ordenadas.find((r) => r.contains.trim() && d.includes(normalizarDescricao(r.contains))) ?? null;
 }
 

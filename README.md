@@ -25,6 +25,9 @@ npm run build    # gera a versão final em dist/
 | 3 — Saúde e Trabalho | Treino em 1 toque, hábitos semanais, calendário, sequência de semanas; acumulado × novo |
 | 4 — Projetos e Estudos | Próximo passo, sessões de foco, matérias com média, cursos, estudo × projetos |
 | 5 — Revisão | Revisão semanal em 3 passos, evolução por pilar, onboarding de primeiro uso |
+| 6 — Tarefas completas | Tela Tarefas, prazo, edição, repetição; editar lançamento, histórico de aportes, "quanto guardar por mês", apagar categoria, prioridade das regras |
+
+As próximas fases (7 a 10: finanças avançadas, organização, IA opcional e qualidade) estão descritas no backlog da especificação.
 
 ## Como testar rapidamente
 

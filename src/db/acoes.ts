@@ -25,7 +25,8 @@ import type {
   Subject,
   Assessment,
 } from "./types";
-import { importHash } from "../lib/financas";
+import { importHash, ordenarRegras } from "../lib/financas";
+import { proximaOcorrencia } from "../lib/tarefas";
 
 export type Desfazer = () => Promise<unknown>;
 
@@ -53,10 +54,20 @@ export async function criarTarefa(
   return { tarefa, cabeHoje, desfazer: () => db.tasks.delete(tarefa.id) };
 }
 
-export async function alternarTarefa(id: ID) {
+/* Marca/desmarca. Ao CONCLUIR uma tarefa que se repete, cria a
+   próxima ocorrência (e devolve, para o "desfazer" poder apagá-la). */
+export async function alternarTarefa(id: ID): Promise<{ proxima?: Task }> {
   const t = await db.tasks.get(id);
-  if (!t) return;
-  await db.tasks.update(id, { doneAt: t.doneAt ? undefined : agora(), updatedAt: agora() });
+  if (!t) return {};
+  const concluindo = !t.doneAt;
+  await db.tasks.update(id, { doneAt: concluindo ? agora() : undefined, updatedAt: agora() });
+  if (!concluindo || !t.repeat) return {};
+  const datas = proximaOcorrencia(t, hojeISO());
+  if (!datas) return {};
+  const { id: _id, createdAt: _c, updatedAt: _u, doneAt: _d, ...resto } = t;
+  const proxima = comBase({ ...resto, ...datas }) as Task;
+  await db.tasks.add(proxima);
+  return { proxima };
 }
 
 export async function atualizarTarefa(id: ID, mudanca: Partial<Task>) {
@@ -149,7 +160,11 @@ export async function criarRegra(contains: string, categoryId: ID) {
   if (!texto) return;
   const existente = await db.categoryRules.filter((r) => r.contains.toUpperCase() === texto).first();
   if (existente) await db.categoryRules.update(existente.id, { categoryId, updatedAt: agora() });
-  else await db.categoryRules.add(comBase({ contains: texto, categoryId }));
+  else {
+    /* regra nova entra no fim da fila de prioridade */
+    const ultima = Math.max(0, ...(await db.categoryRules.toArray()).map((r) => r.priority ?? 0));
+    await db.categoryRules.add(comBase({ contains: texto, categoryId, priority: ultima + 1 }));
+  }
 }
 
 export async function criarAporte(goalId: ID, amount: Cents, date: ISODate = hojeISO(), note?: string): Promise<Desfazer> {
@@ -330,4 +345,49 @@ export async function salvarRevisao(dados: Omit<WeeklyReview, "id" | "createdAt"
   const existente = await db.weeklyReviews.where("weekStart").equals(dados.weekStart).first();
   if (existente) await db.weeklyReviews.update(existente.id, { ...dados, updatedAt: agora() });
   else await db.weeklyReviews.add(comBase(dados));
+}
+
+/* ── Fase 6: correções de finanças e configurações ────────── */
+
+export async function apagarAporte(id: ID): Promise<Desfazer> {
+  const d = await db.savingsDeposits.get(id);
+  await db.savingsDeposits.delete(id);
+  return async () => {
+    if (d) await db.savingsDeposits.add(d);
+  };
+}
+
+export async function atualizarLancamento(id: ID, mudanca: Partial<Pick<Transaction, "amount" | "description" | "date" | "categoryId">>) {
+  await db.transactions.update(id, { ...mudanca, updatedAt: agora() });
+}
+
+/* Categorias que o app usa como padrão não podem ser apagadas. */
+export const CATEGORIAS_SISTEMA = ["Sem categoria", "Outras entradas"];
+
+/* Apaga a categoria: os lançamentos dela vão para a categoria padrão
+   do mesmo tipo e as regras que apontavam para ela somem. Devolve
+   quantos lançamentos foram movidos. */
+export async function apagarCategoria(id: ID): Promise<number> {
+  const c = await db.categories.get(id);
+  if (!c || CATEGORIAS_SISTEMA.includes(c.name)) return 0;
+  const destino = await semCategoria(c.type);
+  return db.transaction("rw", db.categories, db.categoryRules, db.transactions, async () => {
+    const movidos = await db.transactions.where("categoryId").equals(id).modify({ categoryId: destino, updatedAt: agora() });
+    await db.categoryRules.where("categoryId").equals(id).delete();
+    await db.categories.delete(id);
+    return movidos;
+  });
+}
+
+/* Sobe (-1) ou desce (+1) uma regra na ordem de prioridade e
+   renumera todas de 1 em diante. */
+export async function moverRegra(id: ID, direcao: -1 | 1) {
+  const regras = ordenarRegras(await db.categoryRules.toArray());
+  const i = regras.findIndex((r) => r.id === id);
+  const j = i + direcao;
+  if (i < 0 || j < 0 || j >= regras.length) return;
+  [regras[i], regras[j]] = [regras[j], regras[i]];
+  await db.transaction("rw", db.categoryRules, async () => {
+    for (let k = 0; k < regras.length; k++) await db.categoryRules.update(regras[k].id, { priority: k + 1 });
+  });
 }

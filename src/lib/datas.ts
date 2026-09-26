@@ -5,6 +5,7 @@ import {
   addDays,
   addMonths,
   differenceInCalendarDays,
+  differenceInCalendarMonths,
   endOfMonth,
   format,
   parseISO,
@@ -34,6 +35,8 @@ export const paraISO = (d: Date): ISODate => format(d, "yyyy-MM-dd");
 export const somarDias = (d: ISODate, n: number) => paraISO(addDays(deISO(d), n));
 export const somarMeses = (d: ISODate, n: number) => paraISO(addMonths(deISO(d), n));
 export const diasEntre = (a: ISODate, b: ISODate) => differenceInCalendarDays(deISO(b), deISO(a));
+/* meses de calendário de a até b (set → jul do ano seguinte = 10) */
+export const mesesEntre = (a: ISODate, b: ISODate) => differenceInCalendarMonths(deISO(b), deISO(a));
 
 export interface Semana {
   inicio: ISODate; // segunda

@@ -78,8 +78,8 @@ export async function popular(tx: DexieTx) {
   await tx.table("categories").bulkAdd(categorias);
 
   const porNome = new Map(categorias.map((c) => [c.name, c.id]));
-  const regras: CategoryRule[] = REGRAS_PADRAO.map(([contains, nome]) =>
-    comBase({ contains, categoryId: porNome.get(nome)! }),
+  const regras: CategoryRule[] = REGRAS_PADRAO.map(([contains, nome], i) =>
+    comBase({ contains, categoryId: porNome.get(nome)!, priority: i + 1 }),
   );
   await tx.table("categoryRules").bulkAdd(regras);
 

@@ -9,6 +9,7 @@ import {
   Dumbbell,
   FolderKanban,
   MoreHorizontal,
+  ListTodo,
   Plus,
   Settings as Engrenagem,
   Sun,
@@ -29,6 +30,7 @@ interface Item {
 
 const ITENS: Item[] = [
   { para: "/", nome: "Hoje", Icone: Sun },
+  { para: "/tarefas", nome: "Tarefas", Icone: ListTodo },
   { para: "/financas", nome: "Finanças", Icone: Wallet, cor: "var(--pilar-financas)" },
   { para: "/trabalho", nome: "Trabalho", Icone: Briefcase, cor: "var(--pilar-trabalho)" },
   { para: "/projetos", nome: "Projetos", Icone: FolderKanban, cor: "var(--pilar-projetos)" },
@@ -93,7 +95,7 @@ export function Layout({ onCapturar }: { onCapturar: () => void }) {
         className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 items-end border-t border-linha bg-folha px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden"
       >
         <ItemInferior item={ITENS[0]} />
-        <ItemInferior item={ITENS[1]} />
+        <ItemInferior item={ITENS[2]} />
         <div className="flex justify-center">
           <button
             type="button"
@@ -104,7 +106,7 @@ export function Layout({ onCapturar }: { onCapturar: () => void }) {
             <Plus size={26} aria-hidden="true" />
           </button>
         </div>
-        <ItemInferior item={ITENS[3]} />
+        <ItemInferior item={ITENS[4]} />
         <button
           type="button"
           onClick={() => setMais(true)}
@@ -126,7 +128,7 @@ export function Layout({ onCapturar }: { onCapturar: () => void }) {
                 <X size={20} />
               </button>
             </div>
-            {[ITENS[2], ITENS[4], ITENS[5], ITENS[6], CONFIG].map((i) => (
+            {[ITENS[1], ITENS[3], ITENS[5], ITENS[6], ITENS[7], CONFIG].map((i) => (
               <ItemLateral key={i.para} item={i} largo />
             ))}
           </div>

@@ -16,6 +16,7 @@ import { Estudos } from "../features/estudos/Estudos";
 import { Revisao } from "../features/revisao/Revisao";
 import { BoasVindas } from "../features/onboarding/BoasVindas";
 import { Trabalho } from "../features/trabalho/Trabalho";
+import { Tarefas } from "../features/tarefas/Tarefas";
 import { ToastProvider } from "../ui/Toast";
 
 /* Se uma tela quebrar, mostra isto em vez da página de erro do
@@ -66,6 +67,7 @@ export function App() {
           { index: true, element: <Hoje /> },
           { path: "financas", element: <Financas /> },
           { path: "financas/importar", element: <Importacao /> },
+          { path: "tarefas", element: <Tarefas /> },
           { path: "trabalho", element: <Trabalho /> },
           { path: "projetos", element: <Projetos /> },
           { path: "projetos/:id", element: <ProjetoDetalhe /> },

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CategoryRule, SavingsDeposit, SavingsGoal, Transaction } from "../db/types";
 import {
+  aporteNecessario,
   alvoDaMeta,
   categorizar,
   gastoMedioMensal,
@@ -111,7 +112,14 @@ describe("importHash", () => {
 });
 
 describe("categorizar", () => {
-  const regra = (contains: string, categoryId: string, createdAt: string): CategoryRule => ({ ...base, id: contains, contains, categoryId, createdAt });
+  const regra = (contains: string, categoryId: string, createdAt: string, priority = 0): CategoryRule => ({
+    ...base,
+    id: contains,
+    contains,
+    categoryId,
+    createdAt,
+    priority,
+  });
   const regras = [regra("UBER EATS", "comer", "2026-01-02"), regra("uber", "transporte", "2026-01-01")];
   it("usa a primeira regra criada que bate, sem diferenciar maiúsculas", () => {
     expect(categorizar("Uber *trip", regras)?.categoryId).toBe("transporte");
@@ -119,6 +127,27 @@ describe("categorizar", () => {
   });
   it("sem regra → null", () => {
     expect(categorizar("PADARIA", regras)).toBeNull();
+  });
+  it("a prioridade vale mais que a ordem de criação", () => {
+    const comPrioridade = [regra("uber", "transporte", "2026-01-01", 2), regra("UBER EATS", "comer", "2026-01-02", 1)];
+    expect(categorizar("UBER EATS pedido", comPrioridade)?.categoryId).toBe("comer");
+  });
+});
+
+describe("aporteNecessario", () => {
+  it("divide o que falta pelos meses até a data", () => {
+    // set/2026 → jul/2027 = 10 meses; faltam 6.000,00 → 600,00/mês
+    expect(aporteNecessario(800000, 200000, "2027-07-15", "2026-09-26")).toEqual({ tipo: "mensal", porMes: 60000, meses: 10 });
+  });
+  it("data neste mês = uma parcela só", () => {
+    expect(aporteNecessario(10000, 0, "2026-09-30", "2026-09-26")).toEqual({ tipo: "mensal", porMes: 10000, meses: 1 });
+  });
+  it("arredonda para cima (nunca fica faltando centavo)", () => {
+    expect(aporteNecessario(1000, 0, "2026-12-01", "2026-09-26")).toMatchObject({ porMes: 334 });
+  });
+  it("meta batida ou prazo vencido", () => {
+    expect(aporteNecessario(1000, 1000, "2027-01-01", "2026-09-26")).toEqual({ tipo: "atingida" });
+    expect(aporteNecessario(1000, 400, "2026-09-01", "2026-09-26")).toEqual({ tipo: "prazo-passou", falta: 600 });
   });
 });
 

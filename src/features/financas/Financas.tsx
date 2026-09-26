@@ -2,13 +2,13 @@
    comer fora, gastos por categoria e lançamentos. */
 import { useState } from "react";
 import { Link } from "react-router";
-import { ChevronLeft, ChevronRight, Upload } from "lucide-react";
-import { criarAporte } from "../../db/acoes";
+import { ChevronLeft, ChevronRight, Trash2, Upload } from "lucide-react";
+import { apagarAporte, criarAporte } from "../../db/acoes";
 import { nomeOrigem } from "../../db/types";
 import type { IncomeSource } from "../../db/types";
 import { fmtData, fmtMes, mesAnterior, semanaAtual, ultimasSemanas } from "../../lib/datas";
 import { formatarReais, lerReais, reais } from "../../lib/dinheiro";
-import { gastoNaSemana, gastosPorCategoria, resumoMes } from "../../lib/financas";
+import { aporteNecessario, gastoNaSemana, gastosPorCategoria, resumoMes } from "../../lib/financas";
 import { GraficoBarras } from "../../ui/GraficoBarras";
 import { useToast } from "../../ui/Toast";
 import { Barra, Botao, Cabecalho, Painel, Vazio } from "../../ui/ui";
@@ -172,8 +172,11 @@ function MetasPoupanca({ f }: { f: DadosFinancas }) {
               </li>
             )}
             {projecao.tipo === "sem-dados" && alvo > 0 && <li>Sem projeção ainda: faça o primeiro aporte.</li>}
+            {meta.deadline && alvo > 0 && <AteAData alvo={alvo} saldo={saldo} prazo={meta.deadline} hoje={f.hoje} />}
             {projecao.tipo === "atingida" && <li className="font-medium text-grafite">Meta atingida.</li>}
           </ul>
+
+          <HistoricoAportes deps={f.deps.filter((d) => d.goalId === meta.id)} />
 
           {aberta === meta.id ? (
             <form
@@ -211,6 +214,55 @@ function MetasPoupanca({ f }: { f: DadosFinancas }) {
         </Painel>
       ))}
     </div>
+  );
+}
+
+/* "Para chegar em jul/2027, guarde R$ X por mês" */
+function AteAData({ alvo, saldo, prazo, hoje }: { alvo: number; saldo: number; prazo: string; hoje: string }) {
+  const a = aporteNecessario(alvo, saldo, prazo, hoje);
+  if (a.tipo === "atingida") return null;
+  if (a.tipo === "prazo-passou")
+    return <li>A data desejada ({fmtData(prazo, "MMM/yyyy")}) já passou. Ajuste em Configurações se quiser.</li>;
+  return (
+    <li>
+      Para chegar em <strong className="text-grafite">{fmtData(prazo, "MMM/yyyy")}</strong>, guarde{" "}
+      <strong className="num text-grafite">{reais(a.porMes)}</strong> por mês ({a.meses} {a.meses === 1 ? "mês" : "meses"}).
+    </li>
+  );
+}
+
+/* Aportes e retiradas de uma meta, com opção de apagar um lançado
+   errado (o "desfazer" do aviso some depois de 5 s). */
+function HistoricoAportes({ deps }: { deps: DadosFinancas["deps"] }) {
+  const avisar = useToast();
+  if (!deps.length) return null;
+  const ordenados = [...deps].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt));
+  return (
+    <details className="mt-2 text-sm">
+      <summary className="cursor-pointer text-lapis">
+        {deps.length} {deps.length === 1 ? "movimentação" : "movimentações"}
+      </summary>
+      <ul className="mt-1 max-h-48 overflow-y-auto">
+        {ordenados.map((d) => (
+          <li key={d.id} className="flex items-center gap-2 py-0.5">
+            <span className="w-12 text-xs text-lapis">{fmtData(d.date, "dd/MM")}</span>
+            <span className={`num flex-1 ${d.amount < 0 ? "text-lapis" : ""}`}>
+              {d.amount < 0 ? "−" : "+"}
+              {reais(d.amount)}
+              {d.note && <span className="text-xs text-lapis"> · {d.note}</span>}
+            </span>
+            <button
+              type="button"
+              aria-label={`Apagar movimentação de ${fmtData(d.date)}`}
+              className="rounded p-1 text-lapis hover:text-grafite"
+              onClick={async () => avisar("Movimentação apagada", await apagarAporte(d.id))}
+            >
+              <Trash2 size={13} />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </details>
   );
 }
 

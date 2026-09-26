@@ -3,9 +3,11 @@
    Estas telas de cadastro gravam direto nas tabelas. */
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { db } from "../../db/db";
-import { criarRegra } from "../../db/acoes";
+import { apagarCategoria, CATEGORIAS_SISTEMA, criarRegra, moverRegra } from "../../db/acoes";
+import { ordenarRegras } from "../../lib/financas";
+import { useToast } from "../../ui/Toast";
 import { salvarSettings, useCategorias, useSettings } from "../../db/hooks";
 import type { Category, SavingsGoal } from "../../db/types";
 import { agora, comBase } from "../../lib/id";
@@ -136,6 +138,7 @@ export function ConfigCategorias() {
   const cats = useCategorias();
   const [nova, setNova] = useState("");
   const [tipo, setTipo] = useState<Category["type"]>("saida");
+  const avisar = useToast();
   return (
     <Painel titulo="Categorias" pilar="financas">
       {(["saida", "entrada"] as const).map((t) => (
@@ -145,7 +148,7 @@ export function ConfigCategorias() {
             {cats
               .filter((c) => c.type === t)
               .map((c) => (
-                <li key={c.id} className="grid grid-cols-[2.25rem_1fr_auto] items-center gap-2 sm:grid-cols-[2.25rem_1fr_9rem]">
+                <li key={c.id} className="grid grid-cols-[2.25rem_1fr_auto_2rem] items-center gap-2 sm:grid-cols-[2.25rem_1fr_9rem_2rem]">
                   <input
                     type="color"
                     aria-label={`Cor de ${c.name}`}
@@ -175,6 +178,23 @@ export function ConfigCategorias() {
                     />
                   ) : (
                     <span />
+                  )}
+                  {CATEGORIAS_SISTEMA.includes(c.name) ? (
+                    <span title="Categoria padrão do app: não pode ser apagada" />
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label={`Apagar categoria ${c.name}`}
+                      className="rounded-lg p-1.5 text-lapis hover:bg-papel hover:text-grafite"
+                      onClick={async () => {
+                        const destino = t === "saida" ? "Sem categoria" : "Outras entradas";
+                        if (!window.confirm(`Apagar "${c.name}"? Os lançamentos dela vão para "${destino}" e as regras dela serão apagadas.`)) return;
+                        const n = await apagarCategoria(c.id);
+                        avisar(n ? `Categoria apagada · ${n} lançamentos foram para "${destino}"` : "Categoria apagada");
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   )}
                 </li>
               ))}
@@ -206,18 +226,38 @@ export function ConfigRegras() {
   const cats = useCategorias();
   const [texto, setTexto] = useState("");
   const [cat, setCat] = useState("");
-  const ordenadas = [...regras].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const ordenadas = ordenarRegras(regras);
   return (
     <Painel titulo="Regras de categorização" pilar="financas">
       <p className="mb-3 text-sm text-lapis">
-        Se a descrição do lançamento contém o texto, ele vai para a categoria. Vale a primeira regra da lista que bater.
+        Se a descrição do lançamento contém o texto, ele vai para a categoria. Vale a primeira regra da lista que bater: use as setas para mudar a ordem.
       </p>
       {ordenadas.length === 0 ? (
         <Vazio>Nenhuma regra ainda.</Vazio>
       ) : (
         <ul className="mb-3 divide-y divide-linha">
-          {ordenadas.map((r) => (
+          {ordenadas.map((r, i) => (
             <li key={r.id} className="flex items-center gap-2 py-1.5 text-sm">
+              <span className="flex flex-col">
+                <button
+                  type="button"
+                  aria-label={`Subir prioridade de ${r.contains}`}
+                  disabled={i === 0}
+                  className="rounded p-0.5 text-lapis hover:text-grafite disabled:opacity-30"
+                  onClick={() => moverRegra(r.id, -1)}
+                >
+                  <ChevronUp size={14} />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Descer prioridade de ${r.contains}`}
+                  disabled={i === ordenadas.length - 1}
+                  className="rounded p-0.5 text-lapis hover:text-grafite disabled:opacity-30"
+                  onClick={() => moverRegra(r.id, 1)}
+                >
+                  <ChevronDown size={14} />
+                </button>
+              </span>
               <code className="min-w-24 rounded bg-papel px-1.5 py-0.5">{r.contains}</code>
               <span className="text-lapis">→</span>
               <select

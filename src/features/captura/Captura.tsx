@@ -10,7 +10,8 @@ import { FormEntrada, FormGasto } from "./FormsFinancas";
 import type { LucideIcon } from "lucide-react";
 import { criarIdeia, criarTarefa } from "../../db/acoes";
 import { PILARES } from "../../db/types";
-import type { Pillar } from "../../db/types";
+import type { Pillar, Repeticao } from "../../db/types";
+import { CamposRepeticao } from "../tarefas/EditorTarefa";
 import { hojeISO } from "../../lib/datas";
 import { useToast } from "../../ui/Toast";
 import { Botao, Chip, corPilar } from "../../ui/ui";
@@ -168,6 +169,8 @@ function FormTarefa({ onPronto }: { onPronto: () => void }) {
   const [texto, setTexto] = useState("");
   const [pilar, setPilar] = useState<Pillar | null>(null);
   const [hoje, setHoje] = useState(true);
+  const [prazo, setPrazo] = useState("");
+  const [repeat, setRepeat] = useState<Repeticao | undefined>();
   const avisar = useToast();
   const campo = useRef<HTMLInputElement>(null);
 
@@ -181,6 +184,8 @@ function FormTarefa({ onPronto }: { onPronto: () => void }) {
           pillar: pilar,
           plannedFor: hoje ? hojeISO() : undefined,
           kind: pilar === "trabalho" ? "novo" : undefined,
+          dueDate: prazo || undefined,
+          repeat,
         });
         avisar(
           hoje && !cabeHoje ? "O dia já tem 5 tarefas; esta ficou para depois" : hoje ? "Tarefa para hoje" : "Tarefa guardada",
@@ -213,6 +218,19 @@ function FormTarefa({ onPronto }: { onPronto: () => void }) {
         <input type="checkbox" checked={hoje} onChange={(e) => setHoje(e.target.checked)} className="size-4 accent-current" />
         Para hoje
       </label>
+      {/* prazo e repetição ficam escondidos: a maioria das tarefas não precisa */}
+      <details className="mt-3 text-sm">
+        <summary className="cursor-pointer text-lapis">
+          Prazo e repetição{prazo || repeat ? " · definidos" : ""}
+        </summary>
+        <div className="mt-2 grid gap-2">
+          <label className="flex items-center gap-2">
+            <span className="w-14 text-lapis">Prazo</span>
+            <input type="date" aria-label="Prazo" className="campo w-auto py-1" value={prazo} onChange={(e) => setPrazo(e.target.value)} />
+          </label>
+          <CamposRepeticao valor={repeat} onChange={setRepeat} />
+        </div>
+      </details>
       <Rodape desabilitado={!texto.trim()} />
     </form>
   );

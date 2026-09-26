@@ -103,9 +103,14 @@ function TarefasDoDia() {
     <Painel
       titulo="Tarefas de hoje"
       acao={
-        <Botao tamanho="p" variante="fantasma" onClick={abrirSugestoes}>
-          Puxar tarefas
-        </Botao>
+        <span className="flex items-center gap-1">
+          <Botao tamanho="p" variante="fantasma" onClick={abrirSugestoes}>
+            Puxar tarefas
+          </Botao>
+          <Link to="/tarefas" className="rounded-[10px] px-2.5 py-1 text-[0.8125rem] font-medium text-lapis hover:bg-papel hover:text-grafite">
+            Ver todas
+          </Link>
+        </span>
       }
     >
       <ChecklistHoje

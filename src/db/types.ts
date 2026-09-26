@@ -33,6 +33,14 @@ export interface Task extends Base {
   dueDate?: ISODate;
   plannedFor?: ISODate;
   doneAt?: string;
+  /* tarefa que se repete: ao concluir, nasce a próxima (Fase 6) */
+  repeat?: Repeticao;
+  notes?: string;
+}
+
+export interface Repeticao {
+  cada: number;
+  unidade: "dia" | "semana" | "mes";
 }
 
 export interface Idea extends Base {
@@ -105,6 +113,8 @@ export interface Category extends Base {
 export interface CategoryRule extends Base {
   contains: string;
   categoryId: ID;
+  /* menor = vale primeiro (Fase 6; antes valia a ordem de criação) */
+  priority: number;
 }
 
 export interface SavingsGoal extends Base {
