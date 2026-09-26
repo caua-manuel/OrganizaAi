@@ -11,6 +11,9 @@ import { Captura } from "../features/captura/Captura";
 import { Financas } from "../features/financas/Financas";
 import { Importacao } from "../features/financas/Importacao";
 import { Saude } from "../features/saude/Saude";
+import { Projetos } from "../features/projetos/Projetos";
+import { ProjetoDetalhe } from "../features/projetos/ProjetoDetalhe";
+import { Estudos } from "../features/estudos/Estudos";
 import { Trabalho } from "../features/trabalho/Trabalho";
 import { ToastProvider } from "../ui/Toast";
 
@@ -63,8 +66,9 @@ export function App() {
           { path: "financas", element: <Financas /> },
           { path: "financas/importar", element: <Importacao /> },
           { path: "trabalho", element: <Trabalho /> },
-          { path: "projetos", element: <EmBreve titulo="Projetos" pilar="projetos" texto="Em construção." /> },
-          { path: "estudos", element: <EmBreve titulo="Estudos" pilar="estudos" texto="Em construção." /> },
+          { path: "projetos", element: <Projetos /> },
+          { path: "projetos/:id", element: <ProjetoDetalhe /> },
+          { path: "estudos", element: <Estudos /> },
           { path: "saude", element: <Saude /> },
           { path: "revisao", element: <EmBreve titulo="Revisão" texto="Em construção." /> },
           { path: "configuracoes", element: <Configuracoes /> },

@@ -3,7 +3,8 @@
    Meta: qualquer registro em até 3 toques e 10 segundos. */
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { ArrowDownCircle, ArrowUpCircle, CheckSquare, Dumbbell, Lightbulb, X } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, CheckSquare, Dumbbell, Lightbulb, Timer, X } from "lucide-react";
+import { FormFoco } from "./FormFoco";
 import { FormTreino } from "./FormTreino";
 import { FormEntrada, FormGasto } from "./FormsFinancas";
 import type { LucideIcon } from "lucide-react";
@@ -14,7 +15,7 @@ import { hojeISO } from "../../lib/datas";
 import { useToast } from "../../ui/Toast";
 import { Botao, Chip, corPilar } from "../../ui/ui";
 
-export type TipoCaptura = "gasto" | "entrada" | "ideia" | "tarefa" | "treino";
+export type TipoCaptura = "gasto" | "entrada" | "ideia" | "tarefa" | "treino" | "foco";
 
 interface Opcao {
   tipo: TipoCaptura;
@@ -29,6 +30,7 @@ const OPCOES: Opcao[] = [
   { tipo: "ideia", nome: "Ideia", Icone: Lightbulb, cor: "var(--pilar-saude)" },
   { tipo: "tarefa", nome: "Tarefa", Icone: CheckSquare, cor: "var(--pilar-trabalho)" },
   { tipo: "treino", nome: "Treino", Icone: Dumbbell, cor: "var(--pilar-saude)" },
+  { tipo: "foco", nome: "Foco", Icone: Timer, cor: "var(--pilar-projetos)" },
 ];
 
 export function Captura({ aberta, onFechar }: { aberta: boolean; onFechar: () => void }) {
@@ -111,6 +113,7 @@ export function Captura({ aberta, onFechar }: { aberta: boolean; onFechar: () =>
         {tipo === "ideia" && <FormIdeia onPronto={onFechar} />}
         {tipo === "tarefa" && <FormTarefa onPronto={onFechar} />}
         {tipo === "treino" && <FormTreino onPronto={onFechar} />}
+        {tipo === "foco" && <FormFoco onPronto={onFechar} />}
       </div>
     </div>
   );

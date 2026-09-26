@@ -4,6 +4,15 @@
    `referencia` desenha uma linha tracejada (meta ou limite). */
 import { Bar, BarChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+/* Arredonda o topo do eixo para 1, 2, 2,5 ou 5 × 10ⁿ: eixos com
+   0-50-100-150-200 são lidos de relance; 0-66-132-198-264 não. */
+function topoRedondo(v: number) {
+  if (v <= 0) return 1;
+  const p = 10 ** Math.floor(Math.log10(v));
+  const n = v / p;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
+}
+
 export interface PontoBarra {
   rotulo: string;
   valor: number;
@@ -47,7 +56,7 @@ export function GraficoBarras({
               tickFormatter={(v: number) => formatar(v)}
               allowDecimals={false}
               /* o topo do eixo inclui a linha de referência, senão ela some */
-              domain={[0, (max: number) => Math.ceil(Math.max(max, (referencia?.valor ?? 0) * 1.1))]}
+              domain={[0, (max: number) => topoRedondo(Math.max(max, (referencia?.valor ?? 0) * 1.05))]}
             />
             <Tooltip
               cursor={{ fill: "var(--cor-linha)", opacity: 0.5 }}

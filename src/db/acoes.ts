@@ -20,6 +20,9 @@ import type {
   Task,
   Transaction,
   Workout,
+  Project,
+  Subject,
+  Assessment,
 } from "./types";
 import { importHash } from "../lib/financas";
 
@@ -260,4 +263,61 @@ export async function registrarFoco(
   const f: FocusSession = comBase({ pillar, minutes, projectId, date });
   await db.focusSessions.add(f);
   return () => db.focusSessions.delete(f.id);
+}
+
+/* ── Projetos ─────────────────────────────────────────────── */
+
+export async function criarProjeto(name: string, nextStep?: string) {
+  const p: Project = comBase({ name: name.trim(), status: "ativo" as const, nextStep: nextStep?.trim() || undefined });
+  await db.projects.add(p);
+  return p;
+}
+
+export async function atualizarProjeto(id: ID, mudanca: Partial<Project>) {
+  await db.projects.update(id, { ...mudanca, updatedAt: agora() });
+}
+
+/* ── Estudos ──────────────────────────────────────────────── */
+
+export async function criarMateria(dados: Omit<Subject, "id" | "createdAt" | "updatedAt">) {
+  await db.subjects.add(comBase({ ...dados, name: dados.name.trim() }));
+}
+
+export async function atualizarMateria(id: ID, mudanca: Partial<Subject>) {
+  await db.subjects.update(id, { ...mudanca, updatedAt: agora() });
+}
+
+export async function apagarMateria(id: ID) {
+  await db.transaction("rw", db.subjects, db.assessments, async () => {
+    await db.assessments.where("subjectId").equals(id).delete();
+    await db.subjects.delete(id);
+  });
+}
+
+export async function criarAvaliacao(dados: Omit<Assessment, "id" | "createdAt" | "updatedAt">) {
+  await db.assessments.add(comBase({ ...dados, title: dados.title.trim() }));
+}
+
+export async function atualizarAvaliacao(id: ID, mudanca: Partial<Assessment>) {
+  await db.assessments.update(id, { ...mudanca, updatedAt: agora() });
+}
+
+export async function apagarAvaliacao(id: ID) {
+  await db.assessments.delete(id);
+}
+
+export async function criarCurso(name: string, totalLessons: number) {
+  await db.courses.add(comBase({ name: name.trim(), totalLessons, doneLessons: 0, startedAt: hojeISO() }));
+}
+
+/* +1 aula; ao chegar na última, o curso fica concluído hoje. */
+export async function maisUmaAula(id: ID, passo = 1) {
+  const c = await db.courses.get(id);
+  if (!c) return;
+  const feitas = Math.max(0, Math.min(c.totalLessons, c.doneLessons + passo));
+  await db.courses.update(id, {
+    doneLessons: feitas,
+    finishedAt: feitas >= c.totalLessons ? (c.finishedAt ?? hojeISO()) : undefined,
+    updatedAt: agora(),
+  });
 }
