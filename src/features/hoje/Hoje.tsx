@@ -13,6 +13,7 @@ import { useToast } from "../../ui/Toast";
 import { Botao, Cabecalho, Painel, Vazio } from "../../ui/ui";
 import { ChecklistHoje } from "./ChecklistHoje";
 import { CaixaIdeias } from "./CaixaIdeias";
+import { FaixaFinancas } from "./FaixaFinancas";
 
 export function Hoje() {
   const hoje = hojeISO();
@@ -37,6 +38,8 @@ export function Hoje() {
       />
 
       <div className="grid gap-4">
+        <FaixaFinancas />
+
         {pedirBackup && (
           <p className="rounded-xl border border-linha bg-folha px-4 py-2.5 text-sm">
             Faz mais de uma semana desde o último backup.{" "}

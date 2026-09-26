@@ -5,8 +5,18 @@
    nós, não vieram do briefing (exceto "Comer fora" e as origens). */
 import type { Transaction as DexieTx } from "dexie";
 import type { Category, CategoryRule, Habit, SavingsGoal, Settings } from "./types";
-import { comBase } from "../lib/id";
+import { comBase as comBaseAgora } from "../lib/id";
 import { hojeISO, somarMeses } from "../lib/datas";
+
+/* No seed tudo nasce no mesmo milissegundo; cada registro ganha +1 ms
+   para a ordem de criação ser a ordem das listas abaixo (importa nas
+   regras: vale a primeira criada). */
+let passo = 0;
+const inicio = Date.now();
+function comBase<T extends object>(dados: T) {
+  const t = new Date(inicio + passo++).toISOString();
+  return { ...comBaseAgora(dados), createdAt: t, updatedAt: t };
+}
 
 type SemBase<T> = Omit<T, "id" | "createdAt" | "updatedAt">;
 

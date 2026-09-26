@@ -1,18 +1,29 @@
 /* Configurações: tudo que é ajustável no app sem mexer no código. */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router";
 import { db } from "../../db/db";
 import { baixarJSON, exportarTudo, importarTudo, validarBackup } from "../../db/backup";
 import { salvarSettings, useSettings } from "../../db/hooks";
 import { hojeISO } from "../../lib/datas";
 import type { Settings } from "../../db/types";
 import { Botao, Cabecalho, Chip, Painel } from "../../ui/ui";
+import { ConfigBancos, ConfigCategorias, ConfigPoupanca, ConfigRegras } from "./ConfigFinancas";
 
 export function Configuracoes() {
+  /* links como /configuracoes#poupanca rolam até a seção */
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (hash) setTimeout(() => document.querySelector(hash)?.scrollIntoView({ behavior: "smooth" }), 50);
+  }, [hash]);
   return (
     <>
       <Cabecalho titulo="Configurações" />
       <div className="grid gap-4">
         <SecaoTema />
+        <ConfigPoupanca />
+        <ConfigCategorias />
+        <ConfigRegras />
+        <ConfigBancos />
         <SecaoBackup />
       </div>
     </>
