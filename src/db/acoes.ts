@@ -20,6 +20,7 @@ import type {
   Task,
   Transaction,
   Workout,
+  WeeklyReview,
   Project,
   Subject,
   Assessment,
@@ -320,4 +321,13 @@ export async function maisUmaAula(id: ID, passo = 1) {
     finishedAt: feitas >= c.totalLessons ? (c.finishedAt ?? hojeISO()) : undefined,
     updatedAt: agora(),
   });
+}
+
+/* ── Revisão semanal ──────────────────────────────────────── */
+
+/* Uma revisão por semana: salvar de novo atualiza a mesma. */
+export async function salvarRevisao(dados: Omit<WeeklyReview, "id" | "createdAt" | "updatedAt">) {
+  const existente = await db.weeklyReviews.where("weekStart").equals(dados.weekStart).first();
+  if (existente) await db.weeklyReviews.update(existente.id, { ...dados, updatedAt: agora() });
+  else await db.weeklyReviews.add(comBase(dados));
 }

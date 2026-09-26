@@ -21,6 +21,7 @@ export function Configuracoes() {
       <Cabecalho titulo="Configurações" />
       <div className="grid gap-4">
         <SecaoTema />
+        <SecaoPeriodo />
         <ConfigHabitos />
         <ConfigRotina />
         <ConfigPoupanca />
@@ -48,6 +49,40 @@ function SecaoTema() {
             {o.nome}
           </Chip>
         ))}
+      </div>
+    </Painel>
+  );
+}
+
+function SecaoPeriodo() {
+  const { startDate, endDate } = useSettings();
+  return (
+    <Painel titulo="Período de acompanhamento">
+      <div className="grid max-w-md grid-cols-2 gap-3">
+        <div>
+          <label className="rotulo" htmlFor="periodo-inicio">
+            Início
+          </label>
+          <input
+            id="periodo-inicio"
+            type="date"
+            className="campo"
+            value={startDate}
+            onChange={(e) => e.target.value && salvarSettings({ startDate: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className="rotulo" htmlFor="periodo-fim">
+            Fim
+          </label>
+          <input
+            id="periodo-fim"
+            type="date"
+            className="campo"
+            value={endDate}
+            onChange={(e) => e.target.value && salvarSettings({ endDate: e.target.value })}
+          />
+        </div>
       </div>
     </Painel>
   );

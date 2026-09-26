@@ -4,7 +4,6 @@
 import { useEffect, useState } from "react";
 import { createBrowserRouter, Navigate, RouterProvider, useRouteError } from "react-router";
 import { Layout } from "./Layout";
-import { EmBreve } from "./EmBreve";
 import { Configuracoes } from "../features/configuracoes/Configuracoes";
 import { Hoje } from "../features/hoje/Hoje";
 import { Captura } from "../features/captura/Captura";
@@ -14,6 +13,8 @@ import { Saude } from "../features/saude/Saude";
 import { Projetos } from "../features/projetos/Projetos";
 import { ProjetoDetalhe } from "../features/projetos/ProjetoDetalhe";
 import { Estudos } from "../features/estudos/Estudos";
+import { Revisao } from "../features/revisao/Revisao";
+import { BoasVindas } from "../features/onboarding/BoasVindas";
 import { Trabalho } from "../features/trabalho/Trabalho";
 import { ToastProvider } from "../ui/Toast";
 
@@ -70,7 +71,8 @@ export function App() {
           { path: "projetos/:id", element: <ProjetoDetalhe /> },
           { path: "estudos", element: <Estudos /> },
           { path: "saude", element: <Saude /> },
-          { path: "revisao", element: <EmBreve titulo="Revisão" texto="Em construção." /> },
+          { path: "revisao", element: <Revisao /> },
+          { path: "boas-vindas", element: <BoasVindas /> },
           { path: "configuracoes", element: <Configuracoes /> },
           { path: "*", element: <Navigate to="/" replace /> },
         ],

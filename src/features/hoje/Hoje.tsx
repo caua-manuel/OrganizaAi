@@ -1,14 +1,15 @@
 /* Tela Hoje: a porta de entrada. De cima para baixo: finanças,
    tarefas do dia, caixa de ideias e a semana em andamento. */
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, Navigate } from "react-router";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Dumbbell } from "lucide-react";
 import { db } from "../../db/db";
 import { alternarTarefa, criarTarefa, puxarParaHoje, sugestoesParaHoje } from "../../db/acoes";
 import type { Task } from "../../db/types";
 import { useSettings } from "../../db/hooks";
-import { diaDaSemana, diasEntre, fmtData, hojeISO, nomeDiaSemana } from "../../lib/datas";
+import { diaDaSemana, diasEntre, fmtData, hojeISO, nomeDiaSemana, semanaAtual } from "../../lib/datas";
+import { diaDeRevisao } from "../../lib/revisao";
 import { useToast } from "../../ui/Toast";
 import { Botao, Cabecalho, Painel, Vazio } from "../../ui/ui";
 import { ChecklistHoje } from "./ChecklistHoje";
@@ -26,6 +27,14 @@ export function Hoje() {
   const refBackup = settings.lastBackupAt?.slice(0, 10) ?? settings.startDate;
   const pedirBackup = diasEntre(refBackup, hoje) > 7;
 
+  /* primeiro uso → boas-vindas. Lê o banco direto (e não o
+     useSettings, que devolve padrões enquanto carrega) para não
+     redirecionar por engano. */
+  const salvo = useLiveQuery(() => db.settings.get("app"), []);
+  const revisada = useLiveQuery(() => db.weeklyReviews.where("weekStart").equals(semanaAtual(hoje).inicio).count(), [hoje]);
+  if (salvo && !salvo.onboardedAt) return <Navigate to="/boas-vindas" replace />;
+  const pedirRevisao = diaDeRevisao(diaDaSemana(hoje)) && revisada === 0;
+
   const dia = nomeDiaSemana(hoje);
   return (
     <>
@@ -33,13 +42,22 @@ export function Hoje() {
         titulo="Hoje"
         sub={
           <>
-            <span className="capitalize">{dia}</span>, {fmtData(hoje, "d 'de' MMMM")}
+            <span className="inline-block first-letter:uppercase">{dia}</span>, {fmtData(hoje, "d 'de' MMMM")}
           </>
         }
       />
 
       <div className="grid gap-4">
         <FaixaFinancas />
+
+        {pedirRevisao && (
+          <p className="rounded-xl border border-linha bg-folha px-4 py-2.5 text-sm">
+            A semana está fechando. Que tal 5 minutos de revisão?{" "}
+            <Link to="/revisao" className="font-medium underline underline-offset-2">
+              Fazer revisão
+            </Link>
+          </p>
+        )}
 
         {pedirBackup && (
           <p className="rounded-xl border border-linha bg-folha px-4 py-2.5 text-sm">
