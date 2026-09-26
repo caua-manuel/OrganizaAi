@@ -2,7 +2,8 @@
 
 Painel pessoal para acompanhar 6 meses em 5 pilares — **Finanças, Trabalho, Projetos, Estudos e Saúde** — com a sensação de um caderno rápido: registrar qualquer coisa em até 3 toques e 10 segundos.
 
-A especificação completa está em [BRIEFING.md](BRIEFING.md).
+- Especificação original de produto: [BRIEFING.md](BRIEFING.md).
+- **Especificação viva (arquitetura, modelo de dados, cada módulo e backlog numerado):** [docs/ESPECIFICACAO.md](docs/ESPECIFICACAO.md). Para pedir uma melhoria, cite o ID do backlog — por exemplo, "implemente o F-04".
 
 ## Como rodar
 
