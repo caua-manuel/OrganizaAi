@@ -8,6 +8,7 @@ import { hojeISO } from "../../lib/datas";
 import type { Settings } from "../../db/types";
 import { Botao, Cabecalho, Chip, Painel } from "../../ui/ui";
 import { ConfigBancos, ConfigCategorias, ConfigPoupanca, ConfigRegras } from "./ConfigFinancas";
+import { ConfigHabitos, ConfigRotina } from "./ConfigHabitos";
 
 export function Configuracoes() {
   /* links como /configuracoes#poupanca rolam até a seção */
@@ -20,6 +21,8 @@ export function Configuracoes() {
       <Cabecalho titulo="Configurações" />
       <div className="grid gap-4">
         <SecaoTema />
+        <ConfigHabitos />
+        <ConfigRotina />
         <ConfigPoupanca />
         <ConfigCategorias />
         <ConfigRegras />

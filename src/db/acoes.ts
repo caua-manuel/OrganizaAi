@@ -4,7 +4,23 @@
 import { db } from "./db";
 import { agora, comBase } from "../lib/id";
 import { hojeISO, somarDias } from "../lib/datas";
-import type { Category, Cents, ID, Idea, ImportMapping, IncomeSource, ISODate, Pillar, SavingsDeposit, Task, Transaction } from "./types";
+import type {
+  Category,
+  Cents,
+  FocusSession,
+  Habit,
+  HabitLog,
+  ID,
+  Idea,
+  ImportMapping,
+  IncomeSource,
+  ISODate,
+  Pillar,
+  SavingsDeposit,
+  Task,
+  Transaction,
+  Workout,
+} from "./types";
 import { importHash } from "../lib/financas";
 
 export type Desfazer = () => Promise<unknown>;
@@ -204,4 +220,44 @@ export async function salvarMapeamento(m: Omit<ImportMapping, "id" | "createdAt"
   const existente = await db.importMappings.where("bankName").equals(m.bankName).first();
   if (existente) await db.importMappings.update(existente.id, { ...m, updatedAt: agora() });
   else await db.importMappings.add(comBase(m));
+}
+
+/* ── Saúde e hábitos ──────────────────────────────────────── */
+
+export async function registrarTreino(type: Workout["type"], date: ISODate = hojeISO(), focus?: string): Promise<Desfazer> {
+  const w: Workout = comBase({ type, date, focus });
+  await db.workouts.add(w);
+  return () => db.workouts.delete(w.id);
+}
+
+export async function apagarTreino(id: ID): Promise<Desfazer> {
+  const w = await db.workouts.get(id);
+  await db.workouts.delete(id);
+  return async () => {
+    if (w) await db.workouts.add(w);
+  };
+}
+
+/* Registro manual de um hábito sem vínculo (ex.: refeição em casa). */
+export async function registrarHabito(habitId: ID, amount = 1, date: ISODate = hojeISO()): Promise<Desfazer> {
+  const l: HabitLog = comBase({ habitId, amount, date });
+  await db.habitLogs.add(l);
+  return () => db.habitLogs.delete(l.id);
+}
+
+export async function atualizarHabito(id: ID, mudanca: Partial<Habit>) {
+  await db.habits.update(id, { ...mudanca, updatedAt: agora() });
+}
+
+/* ── Foco (projetos e estudos) ───────────────────────────── */
+
+export async function registrarFoco(
+  pillar: FocusSession["pillar"],
+  minutes: number,
+  projectId?: ID,
+  date: ISODate = hojeISO(),
+): Promise<Desfazer> {
+  const f: FocusSession = comBase({ pillar, minutes, projectId, date });
+  await db.focusSessions.add(f);
+  return () => db.focusSessions.delete(f.id);
 }

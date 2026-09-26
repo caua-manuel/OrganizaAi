@@ -14,6 +14,7 @@ import { Botao, Cabecalho, Painel, Vazio } from "../../ui/ui";
 import { ChecklistHoje } from "./ChecklistHoje";
 import { CaixaIdeias } from "./CaixaIdeias";
 import { FaixaFinancas } from "./FaixaFinancas";
+import { SemanaAndamento } from "./SemanaAndamento";
 
 export function Hoje() {
   const hoje = hojeISO();
@@ -55,6 +56,8 @@ export function Hoje() {
             <CaixaIdeias />
           </Painel>
         </div>
+
+        <SemanaAndamento />
 
         {lembrete && (
           <p className="flex items-center gap-2 text-sm text-lapis">

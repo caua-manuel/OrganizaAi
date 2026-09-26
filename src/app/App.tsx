@@ -10,6 +10,8 @@ import { Hoje } from "../features/hoje/Hoje";
 import { Captura } from "../features/captura/Captura";
 import { Financas } from "../features/financas/Financas";
 import { Importacao } from "../features/financas/Importacao";
+import { Saude } from "../features/saude/Saude";
+import { Trabalho } from "../features/trabalho/Trabalho";
 import { ToastProvider } from "../ui/Toast";
 
 /* Se uma tela quebrar, mostra isto em vez da página de erro do
@@ -60,10 +62,10 @@ export function App() {
           { index: true, element: <Hoje /> },
           { path: "financas", element: <Financas /> },
           { path: "financas/importar", element: <Importacao /> },
-          { path: "trabalho", element: <EmBreve titulo="Trabalho" pilar="trabalho" texto="Em construção." /> },
+          { path: "trabalho", element: <Trabalho /> },
           { path: "projetos", element: <EmBreve titulo="Projetos" pilar="projetos" texto="Em construção." /> },
           { path: "estudos", element: <EmBreve titulo="Estudos" pilar="estudos" texto="Em construção." /> },
-          { path: "saude", element: <EmBreve titulo="Saúde" pilar="saude" texto="Em construção." /> },
+          { path: "saude", element: <Saude /> },
           { path: "revisao", element: <EmBreve titulo="Revisão" texto="Em construção." /> },
           { path: "configuracoes", element: <Configuracoes /> },
           { path: "*", element: <Navigate to="/" replace /> },
