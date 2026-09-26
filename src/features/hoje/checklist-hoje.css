@@ -1,0 +1,265 @@
+/* ══ ChecklistHoje ══════════════════════════════════════════
+   Caminho sugerido: src/features/hoje/checklist-hoje.css
+   Adaptado do Checklist do Bencho (MIT — bencho.dev/licence).
+
+   Os tokens do Bencho foram trocados pelos do painel
+   (src/styles/tokens.css):
+     --card, --fill-slab  → --cor-folha     (superfície)
+     --ink, --fill-on     → --cor-grafite   (tinta)
+     --ink-rgb            → --cor-grafite-rgb
+     --pane-edge          → --cor-linha     (contorno)
+     --font-ui            → --fonte-texto
+   Novo: --marca, a cor do pilar da tarefa, definida na
+   própria linha pelo componente. Sem pilar, usa o grafite.
+
+   Nenhuma parte animada tem transition própria: caixa, ✓,
+   risco e opacidade do texto são lidos de uma mola só, no
+   componente. */
+
+.chk {
+  box-sizing: border-box;
+  width: 100%;
+  /* ── abre, não pula ──────────────────────────────────────
+     Uma linha a mais quando você inclui uma tarefa, em um
+     terço de segundo. O componente declara a altura para
+     haver algo a interpolar. Com o overflow cortado, lê-se
+     como o card abrindo, e não como uma caixa redimensionada
+     em volta de coisas já para fora dela. */
+  overflow: hidden;
+  transition: height 360ms cubic-bezier(0.22, 0.9, 0.28, 1);
+  /* as linhas continuam no fluxo; a queda é transform em
+     cada uma. Isto é o contexto de empilhamento da pilha. */
+  position: relative;
+  background: var(--cor-folha);
+  font-family: var(--fonte-texto);
+  color: var(--cor-grafite);
+  /* contorno como sombra espalhada, não borda: não custa
+     layout ao card */
+  box-shadow: 0 0 0 1px var(--cor-linha);
+}
+
+.chk-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  /* para a pilha poder ser ordenada: a última a pousar é o
+     topo, o contrário da ordem do DOM */
+  position: relative;
+  /* NADA nas laterais: o padding do card já é o recuo */
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  /* a LINHA é o alvo, não a caixa — o texto é o que as
+     pessoas realmente apontam */
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── a linha de adicionar ──────────────────────────────────
+   Mesma geometria de uma tarefa, um terço da tinta. O
+   tamanho de texto fica aqui, UMA vez, porque o botão e o
+   campo são a mesma linha em dois momentos. */
+.chk-add {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 450;
+  letter-spacing: -0.01em;
+  transition: opacity 200ms ease;
+}
+
+/* guarda o espaço com a pilha no chão */
+.chk-add[data-hide] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* a caixa que não é caixa: o aro a uma fração da força e
+   nada dentro. Sem tracejado — seria uma segunda ideia de
+   "vazio", e o card já tem uma que funciona. */
+.chk-ghost {
+  flex: none;
+  box-shadow: inset 0 0 0 1.5px rgba(var(--cor-grafite-rgb), 0.16);
+}
+
+.chk-new {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  /* `font: inherit` não leva isto: botão e input pegam
+     letter-spacing da folha do navegador, não do pai */
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.34;
+  transition: opacity 160ms ease;
+}
+
+.chk-new:hover { opacity: 0.62; }
+
+.chk-new:focus-visible {
+  outline: none;
+  opacity: 0.62;
+  box-shadow: 0 0 0 2px rgba(var(--cor-grafite-rgb), 0.4);
+  border-radius: 6px;
+}
+
+.chk-field {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  outline: none;
+}
+
+.chk-field::placeholder {
+  color: rgba(var(--cor-grafite-rgb), 0.34);
+}
+
+/* ── no chão ────────────────────────────────────────────────
+   Opaca só depois de cair: transparente, duas tarefas se
+   leriam uma através da outra a três graus — bagunça, não
+   pilha.
+
+   Num pseudo-elemento e recuado, porque o que cai não é a
+   linha de 40px, é a parte visível dela (~20px). O
+   componente manda esse recuo em --slip.
+
+   Atrás do texto: a linha caída tem z-index, então vira
+   contexto de empilhamento e o -1 fica sob o próprio
+   conteúdo e nada mais. */
+.chk-row[data-fell]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--slip, 9px);
+  bottom: var(--slip, 9px);
+  border-radius: 10px;
+  background: var(--cor-folha);
+  z-index: -1;
+}
+
+.chk-row:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--cor-grafite-rgb), 0.4);
+}
+
+/* ── a caixa ────────────────────────────────────────────────
+   O aro é desenhado uma vez e nunca muda; o preenchimento
+   abre dentro dele. overflow: hidden segura o excesso da
+   mola dentro do aro. */
+.chk-box {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1.5px rgba(var(--cor-grafite-rgb), 0.28);
+}
+
+.chk-fill {
+  position: absolute;
+  inset: 0;
+  /* a cor do pilar é o marca-texto; sem pilar, grafite */
+  background: var(--marca, var(--cor-grafite));
+  /* do meio para fora — a partir de um canto pareceria um
+     painel deslizando */
+  transform-origin: center;
+}
+
+/* ── o ✓ ────────────────────────────────────────────────────
+   Desenhado pelo stroke-dashoffset, do jeito que uma pessoa
+   faz o traço. Tem a cor da superfície, por isso pode ter
+   força total e continuar invisível até haver algo embaixo. */
+.chk-tick {
+  position: relative;
+  width: 68%;
+  height: 68%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--cor-folha);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chk-say {
+  position: relative;
+  /* do tamanho das PALAVRAS, não da linha: o risco é uma
+     escala desta caixa. min-width: 0 deixa encolher em tela
+     estreita, e aí o texto corta com reticências. */
+  display: inline-block;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 450;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.chk-word {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chk-rule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* no meio das LETRAS, não da caixa de linha — a caixa
+     carrega o espaço dos descendentes e o risco ficaria
+     baixo */
+  top: 46%;
+  height: 1.5px;
+  border-radius: 2px;
+  background: currentColor;
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+/* ── o dia fechou ──────────────────────────────────────────
+   Entra depois que a pilha assenta (atraso ≈ duração da
+   queda) e sai na hora. Cor de lápis: é uma informação, não
+   uma comemoração. */
+.chk-fim {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  color: var(--cor-lapis);
+  opacity: 0;
+  transition: opacity 160ms ease;
+  pointer-events: none;
+}
+
+.chk-fim[data-show] {
+  opacity: 1;
+  transition: opacity 320ms ease 520ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chk,
+  .chk-add,
+  .chk-new,
+  .chk-fim,
+  .chk-fim[data-show] {
+    transition: none;
+  }
+}

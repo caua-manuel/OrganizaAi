@@ -1,0 +1,102 @@
+/* Estilo global. O Tailwind gera as classes utilitárias; as cores
+   vêm do tokens.css, então trocar o tema troca tudo de uma vez. */
+@import "tailwindcss";
+@import "./styles/tokens.css";
+
+/* "inline" faz as classes usarem as variáveis CSS ao vivo, em vez
+   de copiar o valor: é isso que deixa o tema escuro funcionar. */
+@theme inline {
+  --color-papel: var(--cor-papel);
+  --color-folha: var(--cor-folha);
+  --color-grafite: var(--cor-grafite);
+  --color-lapis: var(--cor-lapis);
+  --color-linha: var(--cor-linha);
+
+  --color-financas: var(--pilar-financas);
+  --color-trabalho: var(--pilar-trabalho);
+  --color-projetos: var(--pilar-projetos);
+  --color-estudos: var(--pilar-estudos);
+  --color-saude: var(--pilar-saude);
+
+  --font-titulo: var(--fonte-titulo);
+  --font-texto: var(--fonte-texto);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--fonte-titulo);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  /* foco visível só para quem usa teclado */
+  :focus-visible {
+    outline: 2px solid var(--pilar-trabalho);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  /* números alinhados em coluna (valores, contagens) */
+  .num {
+    font-family: var(--fonte-titulo);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .campo {
+    width: 100%;
+    background: var(--cor-folha);
+    color: var(--cor-grafite);
+    border: 1px solid var(--cor-linha);
+    border-radius: 10px;
+    padding: 0.5rem 0.75rem;
+    font: inherit;
+  }
+  .campo::placeholder {
+    color: var(--cor-lapis);
+    opacity: 0.8;
+  }
+  .campo:focus-visible {
+    outline: 2px solid var(--pilar-trabalho);
+    outline-offset: 0;
+    border-color: transparent;
+  }
+
+  .rotulo {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--cor-lapis);
+    margin-bottom: 0.25rem;
+  }
+
+  /* marca-texto: fundo suave da cor do pilar + texto na cor forte */
+  .marca {
+    background: color-mix(in srgb, var(--marca, var(--cor-lapis)) 14%, transparent);
+    color: color-mix(in srgb, var(--marca, var(--cor-lapis)) 80%, var(--cor-grafite));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
